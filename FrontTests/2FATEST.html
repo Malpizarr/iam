@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>2FA Test</title>
+</head>
+<body>
+    <h2>Inicio de Sesión</h2>
+    <form id="loginForm">
+        <input type="text" id="loginUsername" placeholder="Nombre de Usuario">
+        <input type="password" id="loginPassword" placeholder="Contraseña">
+        <button type="submit">Iniciar Sesión</button>
+    </form>
+
+    <div id="2faSection" style="display: none;">
+        <h2>Verificación 2FA</h2>
+        <input type="text" id="2faCode" placeholder="Código 2FA">
+        <button onclick="verify2FA()">Verificar Código</button>
+    </div>
+    <button id="githubLogin">Iniciar sesión con GitHub</button>
+    <script>
+        let currentUsername = '';
+
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            currentUsername = username; // Guardamos el nombre de usuario para usarlo en 2FA
+
+            fetch('http://localhost:8080/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            })
+            .then(response => {
+                if (response.status === 401) {
+                    document.getElementById('2faSection').style.display = 'block';
+                    return;
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data) {
+                    console.log(data);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        function verify2FA() {
+            const code = document.getElementById('2faCode').value;
+
+            fetch('http://localhost:8080/auth/verify-2fa', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username: currentUsername, verificationCode: code })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                document.getElementById('2faSection').style.display = 'none'; // Ocultar la sección de 2FA
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Verificación 2FA fallida');
+            });
+        }
+
+        document.getElementById('githubLogin').addEventListener('click', function() {
+
+    window.location.href = 'http://localhost:8080/oauth2/authorization/github';
+});
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+// audit.proto
+syntax = "proto3";
+
+option java_package = "org.auth.authservice";
+option java_multiple_files = true;
+option java_outer_classname = "AuditProto";
+
+package audit;
+
+message AuditEvent {
+  string eventType = 1;
+  string username = 2;
+  string eventDateTime = 3;
+  string details = 4;
+  string ipAddress = 5;
+}
+
+service AuditService {
+  rpc LogEvent (AuditEvent) returns (LogResponse);
+}
+
+message LogResponse {
+  bool success = 1;
+}
