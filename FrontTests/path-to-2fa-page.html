@@ -24,7 +24,7 @@
             const code = document.getElementById('2faCode').value;
             const username = getQueryParam('username');  // Obtiene el nombre de usuario de los parámetros de la URL
 
-            fetch('http://localhost:8080/auth/verify-2fa', {
+            fetch('http://localhost:8085/auth/verify-2fa', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

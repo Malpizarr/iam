@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import com.google.zxing.WriterException;
 import io.grpc.Status;
 
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.auth.user.*;
 import org.auth.usersservice.Model.User;
@@ -176,7 +177,6 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 			return;
 		}
 
-		// Si el código es válido, envía una respuesta con el campo 'success' establecido en true.
 		Verify2FAResponse response = Verify2FAResponse.newBuilder()
 				.setSuccess(true)
 				.build();
@@ -193,23 +193,30 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 		String provider = userDetails.getOrDefault("provider", "");
 		String sub = userDetails.getOrDefault("sub", "");
 
-		User user = userService.findOrCreateUser(email, name, provider, sub);
+		try {
+			User user = userService.findOrCreateUser(email, name, provider, sub);
 
-		org.auth.usersservice.Model.OauthDTO userDto = userService.convertToDto(user);
+			org.auth.usersservice.Model.OauthDTO userDto = userService.convertToDto(user);
 
-		org.auth.user.OauthDTO grpcUserDto = org.auth.user.OauthDTO.newBuilder()
-				.setEmail(userDto.getEmail())
-				.setName(userDto.getName())
-				.setProvider(userDto.getProvider())
-				.setSub(userDto.getSub())
-				.build();
+			org.auth.user.OauthDTO grpcUserDto = org.auth.user.OauthDTO.newBuilder()
+					.setEmail(userDto.getEmail())
+					.setName(userDto.getName())
+					.setProvider(userDto.getProvider())
+					.setSub(userDto.getSub())
+					.build();
 
-		ProcessOAuthUserResponse response = ProcessOAuthUserResponse.newBuilder()
-				.setOauthDTO(grpcUserDto)
-				.build();
-		responseObserver.onNext(response);
-		responseObserver.onCompleted();
+			ProcessOAuthUserResponse response = ProcessOAuthUserResponse.newBuilder()
+					.setOauthDTO(grpcUserDto)
+					.build();
+			responseObserver.onNext(response);
+			responseObserver.onCompleted();
+		} catch (StatusRuntimeException e) {
+			responseObserver.onError(e);
+		} catch (Exception e) {
+			responseObserver.onError(Status.INTERNAL.withDescription("Internal server error").asRuntimeException());
+		}
 	}
+
 
 
 	private User convertToDomainUser(UserProto userProto) {

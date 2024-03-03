@@ -1,5 +1,6 @@
 package org.auth.usersservice.Service;
 
+import io.grpc.Status;
 import org.auth.usersservice.Model.*;
 import org.auth.usersservice.Repositories.RoleRepository;
 import org.auth.usersservice.Repositories.UserRepository;
@@ -117,7 +118,8 @@ public class UserService implements UserDetailsService {
 				userRepository.save(user);
 			}
 			if (user.isTwoFaEnabled()) {
-				throw new TwoFaRequiredException("2FA verification required");
+				Status status = Status.FAILED_PRECONDITION.withDescription("2FA verification required");
+				throw status.asRuntimeException();
 			}
 			return user;
 		}

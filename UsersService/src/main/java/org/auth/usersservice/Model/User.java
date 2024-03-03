@@ -49,7 +49,7 @@ public class User {
 	protected void onCreate() {
 
 		if (id == null) {
-			id = UUID.randomUUID().toString(); // Generar UUID para el ID
+			id = UUID.randomUUID().toString();
 		}
 	}
 	public Boolean getEmailVerified() {

@@ -2,7 +2,7 @@ package org.auth.authservice;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.auth.authservice.Model.User;
+import jakarta.servlet.http.Cookie;
 import org.auth.authservice.Service.CustomOAuth2UserService;
 import org.auth.authservice.Util.JwtTokenInterceptor;
 import org.auth.authservice.Util.TokenServiceClient;
@@ -93,11 +93,20 @@ public class SecurityConfig {
 					DefaultOAuth2User user = CustomOAuth2UserService.processUserDetails(oAuth2User, providerName, accessToken, name, ipAddress);
 					String token = tokenServiceClient.generateToken(name);
 					System.out.println("Token: " + token);
+
+					Cookie authCookie = new Cookie("AUTH_TOKEN", token);
+					authCookie.setHttpOnly(true);
+					authCookie.setSecure(false);
+					authCookie.setPath("/");
+					response.addCookie(authCookie);
+
 					response.setStatus(HttpServletResponse.SC_OK);
+					response.sendRedirect("http://localhost:3000/2FATEST.html");
+
 				} catch (TwoFaRequiredException e) {
 					if (name != null) {
 						String encodedUsername = URLEncoder.encode(name, StandardCharsets.UTF_8);
-						String twoFaPageUrl = "http://127.0.0.1:3000/path-to-2fa-page.html?username=" + encodedUsername;
+						String twoFaPageUrl = "http://localhost:3000/path-to-2fa-page.html?username=" + encodedUsername;
 						response.sendRedirect(twoFaPageUrl);
 					} else {
 						response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Username is not available");
@@ -127,19 +136,6 @@ public class SecurityConfig {
 		}
 
 	}
-
-	@Bean
-    public WebMvcConfigurer corsConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**")
-                        .allowedOrigins("http://127.0.0.1:3000")
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        .allowedHeaders("*");
-            }
-        };
-    }
 
 	}
 

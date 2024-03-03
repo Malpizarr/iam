@@ -1,8 +1,6 @@
 package org.auth.usersservice.Controller;
 
-import graphql.GraphQLContext;
 import graphql.GraphQLException;
-import graphql.schema.DataFetchingEnvironment;
 import jakarta.servlet.http.HttpServletRequest;
 import org.auth.usersservice.Model.User;
 import org.auth.usersservice.Service.TokenValidationService;
@@ -11,14 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.server.ServerWebExchange;
 
 import java.util.List;
-import java.util.Map;
 
 @Controller
 public class UserController {
@@ -50,7 +43,7 @@ public class UserController {
 			throw new GraphQLException("No JWT token found or token format is incorrect");
 		}
 
-		String token = authHeader.substring(7); // Extrae el token sin el prefijo "Bearer "
+		String token = authHeader.substring(7);
 
 		if (!tokenValidationService.validateToken(token, username)) {
 			throw new GraphQLException("Invalid or expired JWT token");
@@ -63,14 +56,6 @@ public class UserController {
 		userService.CreateUser(user);
 		return user;
 	}
-
-
-
-
-
-
-
-
 
 	@MutationMapping
 	public User updateUser(@Argument String id,@Argument String username,@Argument String email,@Argument String password) {
@@ -108,15 +93,4 @@ public class UserController {
 		return true;
 	}
 
-	private void validateToken(String authHeader, String username) {
-		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-			throw new GraphQLException("No JWT token found or token format is incorrect");
-		}
-
-		String token = authHeader.substring(7); // Extrae el token sin el prefijo "Bearer "
-
-		if (!tokenValidationService.validateToken(token, username)) {
-			throw new GraphQLException("Invalid or expired JWT token");
-		}
-	}
 }

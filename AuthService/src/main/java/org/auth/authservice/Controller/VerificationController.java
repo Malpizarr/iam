@@ -56,7 +56,6 @@ public class VerificationController {
 			return ResponseEntity.ok("Correo verificado con éxito");
 		} catch (Exception e) {
 			e.printStackTrace();
-			// Maneja el caso en que la verificación del usuario falle
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al verificar el usuario: " + e.getMessage());
 		}
 	}

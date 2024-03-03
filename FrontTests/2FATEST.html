@@ -17,6 +17,8 @@
         <button onclick="verify2FA()">Verificar Código</button>
     </div>
     <button id="githubLogin">Iniciar sesión con GitHub</button>
+    <button id="googleLogin">Iniciar sesión con Google</button>
+    <button onclick="create2fa()">Habilitar 2FA</button>
     <script>
         let currentUsername = '';
 
@@ -26,7 +28,7 @@
             const password = document.getElementById('loginPassword').value;
             currentUsername = username; // Guardamos el nombre de usuario para usarlo en 2FA
 
-            fetch('http://localhost:8080/auth/login', {
+            fetch('http://localhost:8085/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -48,10 +50,35 @@
             .catch(error => console.error('Error:', error));
         });
 
+        function create2fa() {
+            fetch(`http://localhost:8085/auth/Malpizarr/2fa/enable`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                } else {
+                    throw new Error('Network response was not ok.');
+                }
+            })
+            .then(blob => {
+                const qrUrl = URL.createObjectURL(blob);
+                const img = document.createElement('img');
+                img.src = qrUrl;
+                document.body.appendChild(img);
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+
         function verify2FA() {
             const code = document.getElementById('2faCode').value;
 
-            fetch('http://localhost:8080/auth/verify-2fa', {
+            fetch('http://localhost:8085/auth/verify-2fa', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -70,9 +97,12 @@
         }
 
         document.getElementById('githubLogin').addEventListener('click', function() {
+         window.location.href = 'http://localhost:8080/oauth2/authorization/github';
+        });
 
-    window.location.href = 'http://localhost:8080/oauth2/authorization/github';
-});
+        document.getElementById('googleLogin').addEventListener('click', function() {
+         window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+        });
 
     </script>
 </body>

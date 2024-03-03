@@ -2,6 +2,7 @@ package org.auth.authservice.Util;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import org.auth.authservice.Model.User;
 import org.auth.user.*;
@@ -98,7 +99,7 @@ public class UserClient {
 	}
 
 	public User processOAuthUser(String email, String name, String provider, String sub) {
-		// Construir el mapa de detalles del usuario
+
 		Map<String, String> userDetailsMap = new HashMap<>();
 		userDetailsMap.put("email", email);
 		userDetailsMap.put("name", name);
@@ -111,19 +112,21 @@ public class UserClient {
 
 		try {
 			ProcessOAuthUserResponse response = userServiceBlockingStub.processOAuthUser(request);
-
 			org.auth.user.OauthDTO oauthDTO = response.getOauthDTO();
 			User user = new User();
 			user.setEmail(oauthDTO.getEmail());
 			user.setUsername(oauthDTO.getName());
 			return user;
 		} catch (StatusRuntimeException e) {
-			System.err.println("RPC failed: " + e.getStatus());
-			throw new RuntimeException("Failed to process OAuth user");
+			if (e.getStatus().getCode() == Status.Code.FAILED_PRECONDITION) {
+				System.err.println("2FA verification required: " + e.getStatus().getDescription());
+				throw new TwoFaRequiredException("2FA verification required");
+			} else {
+				System.err.println("RPC failed: " + e.getStatus());
+				throw new RuntimeException("Failed to process OAuth user: " + e.getStatus().getDescription());
+			}
 		}
 	}
-
-
 
 
 	private User convertToDomainUser(UserProto userProto) {

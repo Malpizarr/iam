@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
 		body.put("status", e.getStatusCode().value());
 		body.put("error", e.getStatusText());
 		body.put("message", e.getMessage());
-		body.put("path", "[path de la solicitud]"); // Ajusta según sea necesario
+		body.put("path", "[path de la solicitud]");
 
 		return new ResponseEntity<>(body, e.getStatusCode());
 	}

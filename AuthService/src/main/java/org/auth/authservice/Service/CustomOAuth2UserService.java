@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.auth.authservice.Model.EmailInfo;
 import org.auth.authservice.Model.User;
 
+import org.auth.authservice.Util.TwoFaRequiredException;
 import org.auth.authservice.Util.UserClient;
 import org.auth.authservice.grpc.AuditClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,14 +60,23 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 		String sub = providerName.equals("github") ? attributes.get("id").toString() : oAuth2User.getName();
 		String email = providerName.equals("github") ? fetchEmailFromGitHub(accessToken) : (String) attributes.get("email");
 
-		User user = userClient.processOAuthUser(email, name, providerName, sub);
+		try {
+			User user = userClient.processOAuthUser(email, name, providerName, sub);
 
-		Map<String, Object> userAttributes = new HashMap<>(oAuth2User.getAttributes());
-		userAttributes.put("email", user.getEmail());
+			Map<String, Object> userAttributes = new HashMap<>(oAuth2User.getAttributes());
+			userAttributes.put("email", user.getEmail());
 
-		auditClient.logEvent("LOGIN", name, LocalDateTime.now().toString(), "User LOGGED IN successfully w/ OAUTH", ipaddress);
+			auditClient.logEvent("LOGIN", name, LocalDateTime.now().toString(), "User LOGGED IN successfully w/ OAUTH", ipaddress);
 
-		return new DefaultOAuth2User(oAuth2User.getAuthorities(), userAttributes, "email");
+			return new DefaultOAuth2User(oAuth2User.getAuthorities(), userAttributes, "email");
+		}catch (TwoFaRequiredException e) {
+			auditClient.logEvent("LOGIN", name, LocalDateTime.now().toString(), "User LOGGED IN failed w/ OAUTH", ipaddress);
+			throw new TwoFaRequiredException(e.getMessage());
+		}
+		catch (Exception e) {
+			auditClient.logEvent("LOGIN", name, LocalDateTime.now().toString(), "User LOGGED IN failed w/ OAUTH", ipaddress);
+			throw e;
+		}
 	}
 
 
